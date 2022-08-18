@@ -1,6 +1,7 @@
 # Simple user CRUD (Go + Redis + Kafka + Clickhouse)
 
 ## Installation
+Copy .env.example into .env. You don't have to change it, you can use default settings.
 ```
 docker compose up -d
 ```
