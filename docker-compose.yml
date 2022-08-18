@@ -1,0 +1,51 @@
+version: "3.9"
+services:
+  user_service:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:14.5
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    user: postgres
+    ports:
+      - "5450:5432"
+    volumes:
+      - ./sql/postgresql.sql:/docker-entrypoint-initdb.d/postgresql.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7.0.4
+    ports:
+      - "6379:6379"
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_CREATE_TOPICS: "user_adds:1:1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_MESSAGE_MAX_BYTES: 2000000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  clickhouse:
+    image: yandex/clickhouse-server
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./sql/clickhouse.sql:/docker-entrypoint-initdb.d/clickhouse.sql
